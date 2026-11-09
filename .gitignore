@@ -1,0 +1,21 @@
+# Target build directory (Crucial for Maven)
+target/
+*.jar
+*.war
+*.ear
+
+# IDE specific files
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# Secrets and environment configurations
+*.env
+*.properties.local
+
+# OS system files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,9 @@
+[
+    {
+      "name": "Product Name",
+      "sku": "SKU",
+      "path": "/relative/path/to/product",
+      "expectedPrice": "$1,199.99",
+      "quantity": 1
+    }
+  ]
