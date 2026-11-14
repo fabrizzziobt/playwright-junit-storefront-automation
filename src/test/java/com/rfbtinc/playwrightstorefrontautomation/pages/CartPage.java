@@ -17,6 +17,10 @@ public class CartPage extends BasePage {
         super(page);
     }
 
+    public CartPage(ProductPage pdp){
+        super((Page) pdp);
+    }
+
     /**
      * Confirms the selected product appears in cart content.
      * For MVP, SKU text is the fastest stable check.

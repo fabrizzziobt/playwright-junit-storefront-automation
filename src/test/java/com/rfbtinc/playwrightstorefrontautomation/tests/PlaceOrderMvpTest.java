@@ -2,6 +2,8 @@ package com.rfbtinc.playwrightstorefrontautomation.tests;
 
 import com.rfbtinc.playwrightstorefrontautomation.base.BaseTest;
 import com.rfbtinc.playwrightstorefrontautomation.model.ProductItem;
+import com.rfbtinc.playwrightstorefrontautomation.pages.CartPage;
+import com.rfbtinc.playwrightstorefrontautomation.pages.CheckoutPage;
 import com.rfbtinc.playwrightstorefrontautomation.pages.ProductPage;
 import com.rfbtinc.playwrightstorefrontautomation.utils.ProductDataLoader;
 import org.junit.jupiter.api.DisplayName;
@@ -25,16 +27,22 @@ class PlaceOrderMvpTest extends BaseTest {
     @MethodSource("productProvider")
     @DisplayName("MVP: user can add a predefined product to cart and start checkout")
     void shouldAddPredefinedProductAndStartCheckout(ProductItem product) {
-        new ProductPage(page)
+
+
+        ProductPage productPage = new ProductPage(page)
                 .open(product)
                 .verifyLoaded(product)
-                .addToCart()
+                .addToCart();
+
+        CartPage cartPage = productPage
                 .goToCart()
-                .verifyProductInCart(product)
+                .verifyProductInCart(product);
+
+        CheckoutPage checkout = cartPage
                 .proceedToCheckout()
                 .waitForCheckoutPage()
-                .continueAsGuestIfPresent()
-                .enterContactEmail("useremail@gmail.com")
+                .enterContactEmail("g10xsharkninjatesting@gmail.com")
+                .continueAsGuest()
                 .continueToShippingStep();
     }
 }
