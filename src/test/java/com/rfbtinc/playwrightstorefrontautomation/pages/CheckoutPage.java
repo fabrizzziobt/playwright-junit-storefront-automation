@@ -38,11 +38,11 @@ public class CheckoutPage extends BasePage {
     private static final String SHIPPING_CONTAINER =
             ".card.shipping-section";
     private static final String SHIPPING_METHOD_CONTAINER =
-            "[data-testid='shipping-methods']";
+            ".shipping-method-list";
     private static final String PAYMENT_CONTAINER =
-            "[data-testid='payment-section']";
+            ".card.payment-form";
     private static final String CREDIT_CARD_CONTAINER =
-            "[data-testid='credit-card-form']";
+            ".adyen-checkout__loading-input__form.loading-input__form";
 
     // Headings / page markers
     private final Locator checkoutHeading;
@@ -74,6 +74,7 @@ public class CheckoutPage extends BasePage {
     // Billing / payment
     private final Locator billingSameAsShippingCheckbox;
     private final Locator creditCardRadio;
+    private final Locator creditCardLabel;
     private final Locator creditCardSection;
     private final Locator cardNumberInput;
     private final Locator expiryDateInput;
@@ -158,7 +159,7 @@ public class CheckoutPage extends BasePage {
                 AriaRole.CHECKBOX,
                 new Page.GetByRoleOptions()
                         .setName(text(
-                                "^(billing address same as shipping"
+                                "^(billing address and shipping address are the same"
                                         + "|same as shipping"
                                         + "|use shipping address as billing address)$"))
         );
@@ -166,8 +167,11 @@ public class CheckoutPage extends BasePage {
         creditCardRadio = paymentSection.getByRole(
                 AriaRole.RADIO,
                 new Locator.GetByRoleOptions()
-                        .setName(text("^(credit card|credit or debit card)$"))
+                        .setName(text("^(credit card|credit or debit card|cards)$"))
         );
+
+        // Explicitly target the label associated with the radio input.
+        creditCardLabel = paymentSection.locator("label[id='lb_scheme'][for='rb_scheme']");
 
         creditCardSection = paymentSection.locator(CREDIT_CARD_CONTAINER);
 
@@ -436,7 +440,17 @@ public class CheckoutPage extends BasePage {
         validateShippingAddress(shippingAddress);
         assertThat(standardShippingRadio).isChecked();
 
-        continueToPaymentButton.click();
+        try {
+            continueToPaymentButton.click();
+        } catch (TimeoutError cause)
+        {
+            throw new AssertionError(
+                    "Cannot continue to Payment: shipping address is invalid,"
+                            + "shipping method is missing, or "
+                            + "did not click button",
+                    cause
+            );
+        }
         return waitForPaymentSection();
     }
 
@@ -455,7 +469,17 @@ public class CheckoutPage extends BasePage {
                     "Payment method not implemented: " + method);
         }
 
-        creditCardRadio.check();
+        try {
+            creditCardLabel.click();
+        } catch (TimeoutError cause) {
+            throw new AssertionError(
+                    "Cannot select card payment: the Cards label "
+                            + "could not be clicked before the timeout.",
+                    cause
+            );
+        }
+
+        //creditCardRadio.click();
         assertThat(creditCardRadio).isChecked();
         assertThat(creditCardSection).isVisible();
 
