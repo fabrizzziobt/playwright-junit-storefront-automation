@@ -2,6 +2,7 @@ package com.rfbtinc.playwrightstorefrontautomation.tests;
 
 import com.rfbtinc.playwrightstorefrontautomation.base.BaseTest;
 import com.rfbtinc.playwrightstorefrontautomation.model.ProductItem;
+import com.rfbtinc.playwrightstorefrontautomation.model.ShippingAddress;
 import com.rfbtinc.playwrightstorefrontautomation.pages.CartPage;
 import com.rfbtinc.playwrightstorefrontautomation.pages.CheckoutPage;
 import com.rfbtinc.playwrightstorefrontautomation.pages.ProductPage;
@@ -23,6 +24,18 @@ class PlaceOrderMvpTest extends BaseTest {
         return products.stream();
     }
 
+    ShippingAddress address = new ShippingAddress(
+            "Random",
+            "User",
+            "19 Cortes St Apt.2",
+            "",
+            "Boston",
+            "MA",
+            "02116",
+            "US",
+            "3333333333"
+    );
+
     @ParameterizedTest
     @MethodSource("productProvider")
     @DisplayName("MVP: user can add a predefined product to cart and start checkout")
@@ -43,6 +56,8 @@ class PlaceOrderMvpTest extends BaseTest {
                 .waitForCheckoutPage()
                 .enterContactEmail("g10xsharkninjatesting@gmail.com")
                 .continueAsGuest()
-                .continueToShippingStep();
+                .waitForShippingSection()
+                .fillShippingAddress(address);
+                //.continueToShippingStep();
     }
 }

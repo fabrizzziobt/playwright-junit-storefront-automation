@@ -3,10 +3,13 @@ package com.rfbtinc.playwrightstorefrontautomation.pages;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.TimeoutError;
+import com.microsoft.playwright.assertions.LocatorAssertions;
 import com.microsoft.playwright.options.AriaRole;
+import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.SelectOption;
 import com.rfbtinc.playwrightstorefrontautomation.model.CheckoutState;
 import com.rfbtinc.playwrightstorefrontautomation.model.ShippingAddress;
+import com.rfbtinc.playwrightstorefrontautomation.utils.ConfigManager;
 
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -33,7 +36,7 @@ public class CheckoutPage extends BasePage {
      * Sections must contain their respective fields/options, not just headings.
      */
     private static final String SHIPPING_CONTAINER =
-            "[data-testid='shipping-address']";
+            ".card.shipping-section";
     private static final String SHIPPING_METHOD_CONTAINER =
             "[data-testid='shipping-methods']";
     private static final String PAYMENT_CONTAINER =
@@ -124,25 +127,15 @@ public class CheckoutPage extends BasePage {
         );
 
         // Shipping fields: scoped to avoid matching billing fields.
-        firstNameInput = shippingSection.getByLabel(
-                text("^first name\\s*\\*?$"));
-        lastNameInput = shippingSection.getByLabel(
-                text("^last name\\s*\\*?$"));
-        addressLine1Input = shippingSection.getByLabel(
-                text("^(address|address line 1|street address)\\s*\\*?$"));
-        addressLine2Input = shippingSection.getByLabel(
-                text("^(address line 2|apartment, suite, etc\\.?|apartment|suite)"
-                        + "(?:\\s*\\(optional\\))?\\s*\\*?$"));
-        cityInput = shippingSection.getByLabel(
-                text("^city\\s*\\*?$"));
-        stateInput = shippingSection.getByLabel(
-                text("^(state|province|state/province|region)\\s*\\*?$"));
-        postalCodeInput = shippingSection.getByLabel(
-                text("^(zip|zip code|postal code)\\s*\\*?$"));
-        phoneInput = shippingSection.getByLabel(
-                text("^(phone|phone number)\\s*\\*?$"));
-        countrySelect = shippingSection.getByLabel(
-                text("^country\\s*\\*?$"));
+        firstNameInput = shippingSection.locator("#shippingFirstNamedefault");
+        lastNameInput = shippingSection.locator("#shippingLastNamedefault");
+        addressLine1Input = shippingSection.locator("#shippingAddressOnedefault");
+        addressLine2Input = shippingSection.locator("#shippingAddressTwodefault");
+        cityInput = shippingSection.locator("#shippingAddressCitydefault");
+        stateInput = shippingSection.locator("#shippingStatedefault");
+        postalCodeInput = shippingSection.locator("#shippingZipCodedefault");
+        phoneInput = shippingSection.locator("#shippingPhoneNumberdefault");
+        countrySelect = shippingSection.locator("#shippingCountrydefault");
 
         // Shipping options
         shippingMethodSection =
@@ -205,7 +198,17 @@ public class CheckoutPage extends BasePage {
     // -------------------------------------------------------
 
     public CheckoutPage waitForCheckoutPage() {
-        assertThat(checkoutHeading).isVisible();
+        page.waitForLoadState(
+                LoadState.LOAD,
+                new Page.WaitForLoadStateOptions().setTimeout(ConfigManager.timeoutMs())
+        );
+
+        assertThat(emailInput).isVisible();
+        assertThat(emailInput).isEditable();
+
+        assertThat(continueAsGuestButton).isVisible();
+        assertThat(continueAsGuestButton).isEnabled();
+
         return this;
     }
 
@@ -214,6 +217,27 @@ public class CheckoutPage extends BasePage {
     }
 
     public CheckoutPage continueAsGuest() {
+        try {
+            assertThat(emailInput).hasValue(Pattern.compile("^(?![.'])(?!.*'@)(?!.*'' )(?!.*\\.\\.)[A-Za-z0-9_.\\-+'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿČčĎďĚěŘřŠšŤťŽžȘșȚțŁłŻżŚśŹźĆćŃńÓóĘęĄąĞğŞşİıœ]+@[a-zA-Z0-9](?:[a-zA-Z0-9\\-]*[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9\\-]*[a-zA-Z0-9])?)*\\.[a-zA-Z]{2,}$"));
+        } catch (AssertionError cause) {
+            throw new AssertionError(
+                    "Cannot continue as guest: the email input is empty, "
+                            + "contains only whitespace, or could not be located. "
+                            + "The previous action must populate the email input.",
+                    cause
+            );
+        }
+
+        try {
+            assertThat(continueAsGuestButton).isVisible();
+        } catch (AssertionError cause) {
+            throw new AssertionError(
+                    "Cannot continue as guest: the 'Continue as guest' button "
+                            + "is not visible or could not be uniquely located.",
+                    cause
+            );
+        }
+
         try {
             assertThat(continueAsGuestButton).isEnabled();
         } catch (AssertionError cause) {
@@ -235,8 +259,24 @@ public class CheckoutPage extends BasePage {
             );
         }
 
+        try {
+            assertThat(shippingSection).isVisible(
+                    new LocatorAssertions.IsVisibleOptions()
+                            .setTimeout(15_000)
+            );
+        } catch (AssertionError cause) {
+            throw new AssertionError(
+                    "Guest checkout did not reach the shipping step within 15 seconds. "
+                            + "The click completed, but the expected shipping section "
+                            + "did not become visible. Check application initialization, "
+                            + "email validation, checkout requests, and browser errors.",
+                    cause
+            );
+        }
+
         return this;
     }
+
 
     public CheckoutPage enterContactEmail(String email) {
         // Required action: fail rather than silently skip a missing field.
