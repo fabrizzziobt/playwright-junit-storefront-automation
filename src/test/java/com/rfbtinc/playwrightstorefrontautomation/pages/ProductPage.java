@@ -1,6 +1,8 @@
 package com.rfbtinc.playwrightstorefrontautomation.pages;
 
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitUntilState;
 import com.rfbtinc.playwrightstorefrontautomation.model.ProductItem;
 import com.rfbtinc.playwrightstorefrontautomation.utils.CloudflareDetector;
 
@@ -28,7 +30,15 @@ public class ProductPage extends BasePage {
      * Opens a PDP using a relative path resolved against the configured locale domain.
      */
     public ProductPage open(ProductItem product) {
-        page.navigate(product.getPath());
+        //page.navigate(product.getPath());
+
+        //We Have to wait for Dom Content, if we wait for full load it is too long
+        this.navigateAndWaitForDOMOnly(product.getPath());
+        //page.navigate(
+        //            product.getPath(),
+        //            new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
+        //);
+//        /page.waitForLoadState(LoadState.DOMCONTENTLOADED);
         //CloudflareDetector.failIfBlocked(page);
         acceptCookiesIfPresent();
         return this;
